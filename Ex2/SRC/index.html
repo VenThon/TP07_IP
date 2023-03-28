@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List and Viewer </title>
+    <style>
+        .wrapper{
+            width: 900px;
+            height: 700px;
+            border: 4px solid black;
+            display: grid;
+            justify-content: center;
+            margin: auto;
+            background-color: aqua;
+        }
+        h1{
+            display: flex;
+            justify-content: center;
+            color: brown;
+        }
+        .content{
+            display: flex;
+            justify-content: center;
+        }
+        #left{
+            width: 400px;
+            height: 600px;
+            background-color: gray;
+            margin: 5px;
+            border-radius: 10px;
+            overflow-y: auto;
+        }
+        #right{
+            border: 2px solid #f4f4f4;
+            width: 400px;
+            height: 600px;
+            background-color: burlywood;
+            margin: 5px;
+            border-radius: 10px;
+            overflow-y: auto;
+        }
+        #loading {
+            margin-top: 250px;
+            width: 50%;
+            height: 100px;
+        }
+        .box_list {
+            display: flex;
+            margin-top: 5px;
+            margin-left: 10px;
+            width: 95%;
+            height: 100px;
+            background-color: white;
+            border-radius: 5px;
+        }
+        .image_list {
+            font-size: 40px;
+        }
+        .box_list:hover {
+            background-color: burlywood;
+        }
+
+        .text1 {
+            margin-top: 10px;
+        }
+
+        .text2 {
+            margin-top: 10px;
+        }
+
+        .block_display_beer {
+            display: grid;
+            justify-content: center;
+        }
+
+        .image_beer {
+            display: flex;
+            justify-content: center;
+        }
+        .beer {
+            width: 170px;
+            height: 300px;
+            margin-top: 20px;
+        }
+        .description {
+            text-align: center;
+        }
+        .name {
+            margin-top: 10px;
+        }
+        .time {
+            margin-top: 10px;
+        }
+        .contribution {
+            margin-top: 10px;
+        }
+        .builder {
+            font-weight: bold;
+        }
+        @media screen and (max-width: 800px) {
+          /* .wrapper{
+            display: flex;
+            flex-direction: row;
+          } */
+          .content{
+            display: flex;
+            flex-direction: column;
+          }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="wrapper" id="wrapper">
+        <h1>Find your favorite 🥂? </h1>
+        <div class="content" id="content">
+            <div id="left">
+
+            </div>
+            <div id="right">
+
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const content = document.getElementById("left");
+        let dataLoading =false;
+        let page=0;
+        let size=10;
+        let check=1;
+        let tmp="";
+        let parseddata="";
+
+        function onclickData(){
+            let tmp1="";
+            for(let i=0,len=content.children.length;i<len;i++){
+                (function(index){
+                    content.children[i].onclick=function(){
+                        tmp1=`
+                        <div class="block_display_beer">
+                            <div class="image_beer"><img src="${parseddata[index].image_url}" class="beer"></img></div>
+                            <div class="description">
+                                <h3 class="name">${parseddata[index].name}</h3>
+                                <p class="time">${parseddata[index].first_brewed}</p>
+                                <p class="des">${parseddata[index].description}</p>
+                                <p class="contribution">Contribution</p>
+                                <p class="bulider">( ${parseddata[index].contributed_by} )</p>
+                            </div>
+                        </div>`
+                        document.getElementById("right").innerHTML=tmp1;
+                    }
+                })(i)
+            }
+        }
+        function display(){
+            let tmp="";
+            const str = localStorage.getItem('data');
+            parseddata = JSON.parse(str);
+            if(str!== null && check ==1){
+                console.log();
+                for(let i=0 ; i<parseddata.length;i++){
+                    tmp +=
+                    `<div class="box_list"> 
+                        <div class="image_list">🍻</div>
+                        <div>
+                            <p class="text1">${parseddata[i].name}</p>
+                            <p class="text2">${parseddata[i].description.substring(0, 30).concat('...')}</p>
+                        </div>
+                    </div>`
+                }
+                content.innerHTML=tmp;
+                number_page=parseddata.length/10;
+                page=parseddata.length;
+                size=page+10;
+            }
+            if(size<81){
+            fetch(`https://api.punkapi.com/v2/beers? page=${page}}&per_page=${size}`).then(async (res) =>{
+                let content = await res.json();
+                const data_json = JSON.stringify(content);
+                window.localStorage.setItem('data', data_json);
+                for(let i=page ; i<content.length;i++){
+                    tmp +=
+                        `<div class="box_list"> 
+                            <div>🍻</div>
+                            <div class="list_each_data">
+                                <p class="text1">${content[i].name}</p>
+                                <p class="text2">${content[i].description.substring(0, 30).concat('...')}</p>
+                            </div>
+                        </div> `
+                }
+                document.getElementById("left").innerHTML=tmp;
+                onclickData();
+            })
+            }
+        }
+        content.addEventListener("scroll", (event) => {
+        const { scrollTop, clientHeight, scrollHeight } = content;
+        if ((clientHeight + scrollTop) >= scrollHeight*0.98) {
+            if (!dataLoading) {
+                size = page +10;
+                display()
+            }
+        }
+     });
+     display();
+     onclickData();
+        
+    </script>
+</body>
+</html>
